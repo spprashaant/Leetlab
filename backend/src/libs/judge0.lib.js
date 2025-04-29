@@ -1,41 +1,62 @@
+import axios from "axios"
+
 export const getJudge0LanguageId = (language) => {
+
     const languageMap = {
-        "PYTHON":71,
-        "JAVA":62,
+        "PYTHON": 71,
+        "JAVA": 62,
         "JAVASCRIPT": 63
     }
+    const languageId = languageMap[language.toUpperCase()];
 
-    return languageMap[language.toUpperCase()] || null;
+    return languageId || null;
 }
 
 export const submitBatch = async (submissions) => {
-    const {data} = axios.post(`${process.env.JUDGE0_API_URL}/submissions/batch?base64_encoded=false`,{
-        submissions
-    });
+    console.log(`${process.env.JUDGE0_API_URL}/submissions/batch?base64_encoded=false`)
+    let response;
+    try {
+        response = await axios.post(`${process.env.JUDGE0_API_URL}/submissions/batch?base64_encoded=false`, {
+            submissions
+        })
+    }
+    catch (error) {
+        console.log(error)
+    }
 
-    console.log("Submissions Results: ", data);
 
-    return data;
-};
+    
+
+    return response.data // [{token} , {token} , {token}]
+}
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const pollBatchResults = async (tokens) => {
-    while(true){
-        const {data} = await axios.get(`${process.env.JUDGE0_API_URL}/submissions/batch`,{
-            params: {
-                tokens: tokens.join(","),
-                base64_encoded:false
-            }
-        });
+    console.log("tokens: ", tokens)
+    let response;
+    while (true) {
+        try {
+            console.log(`${process.env.JUDGE0_API_URL}/submissions/batch`);
 
-        const results = data.submissions;
+            response = await axios.get(`${process.env.JUDGE0_API_URL}/submissions/batch`, {
+                params: {
+                    tokens: tokens.join(","),
+                    base64_encoded: false,
+                }
+            })
+        } catch (error) {
+            console.log(error);
+        }
 
-        const isAllDone = results.every((r) => r.status.id !== 1 &&  r.status.id !== 2);
+        const results = response.data.submissions;
+        console.log("results: ", results)
+        const isAllDone = results.every(
+            (r) => r.status.id !== 1 && r.status.id !== 2
+        )
 
-        if(isAllDone) return results;
-
-        await sleep(1000);
+        if (isAllDone) return results
+        await sleep(1000)
     }
 }
 
