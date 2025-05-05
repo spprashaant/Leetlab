@@ -40,6 +40,8 @@ model User {
   submission Submission[]
 
   problemSolved ProblemSolved[]
+
+  playlists Playlist[]
 }
 
 model Problem {
@@ -62,10 +64,17 @@ model Problem {
   updatedAt DateTime @updatedAt
 
   //Relationship
-  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  submission Submission[]
-  solvedBy   ProblemSolved[]
+  user               User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  submission         Submission[]
+  solvedBy           ProblemSolved[]
+  problemInPlaylists ProblemsInPlaylists[]
 }
+
+//TODO
+// enum Status{
+//   ACCEPTED
+//   WRONG_ANSWER
+// }
 
 model Submission {
   id            String  @id @default(uuid())
@@ -123,4 +132,32 @@ model ProblemSolved {
 
   @@unique([userId, problemId])
   @@index([userId])
+}
+
+model Playlist {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  problems ProblemsInPlaylists[]
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([name, userId]) // names are unique for a user
+}
+
+model ProblemsInPlaylists {
+  id         String   @id @default(uuid())
+  playListId String
+  problemId  String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  playlist Playlist @relation(fields: [playListId], references: [id], onDelete: Cascade)
+  problem  Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@unique([playListId, problemId])
 }
